@@ -39,19 +39,6 @@ public class StackOperations {
       case "delete-stack":
         new DeleteStack(cf, s3).run(args[1].trim());
         break;
-      case "update-stack": {
-        String deploymentParamPath = args[1].trim();
-        String stackParamPath = args[2].trim();
-        String deploymentStackName = args[3].trim();
-        String stackName = args[4].trim();
-        String cfBaseDir = args[5].trim();
-        String version = args[6].trim();
-        String cfPrefix = args[7].trim();
-        String applicationStackName = args[8].trim();
-        new UpdateStack(s3, cf, objectMapper)
-            .run(deploymentParamPath, stackParamPath, deploymentStackName, stackName, cfBaseDir, version, cfPrefix, applicationStackName);
-      }
-      break;
       default:
         throw new RuntimeException("Invalid command '" + args[0] + "'");
     }

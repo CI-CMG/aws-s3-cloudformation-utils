@@ -59,7 +59,7 @@ public final class OperationUtils {
     if (!cf.stackExists(stackContext.getStackName())) {
       createStack(cf, stackContext, stackParameters, applicationStackName);
     } else {
-      updateStack(cf, stackContext, stackParameters, applicationStackName);
+      throw new UnsupportedOperationException("Stack already exists: " + stackContext.getStackName());
     }
   }
 
@@ -80,20 +80,6 @@ public final class OperationUtils {
     }
 
     LOGGER.info("Done Creating Stack: {}", stackName);
-  }
-
-  public static void updateStack(CloudFormationOperations cf, StackContext stackContext, List<ParameterKeyValue> parameters, String applicationStackName) {
-
-    String stackName = stackContext.getStackName();
-
-    LOGGER.info("Updating Stack: {}", stackName);
-
-    cf.updateStackWithUrlAndWait(
-        stackName,
-        String.format("https://s3.amazonaws.com/%s/stack/%s", stackContext.getDeploymentBucketName(), applicationStackName),
-        parameters);
-
-    LOGGER.info("Done Updating Stack: {}", stackName);
   }
 
   public static void createStack(CloudFormationOperations cf, StackContext stackContext, List<ParameterKeyValue> parameters, String applicationStackName) {
