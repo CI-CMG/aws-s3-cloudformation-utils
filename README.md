@@ -1,8 +1,6 @@
-# aws-s3-outputstream
+# aws-s3-cloudformation-utils
 
-The aws-s3-outputstream project allows for multipart uploads to an AWS S3 bucket through a java.io.OutputStream.
-
-Additional project information, javadocs, and test coverage is located at https://ci-cmg.github.io/project-documentation/aws-s3-outputstream/
+The aws-s3-cloudformation-utils project supports the creation and deletion of CloudFormation stacks using CloudFormation templates.
 
 ## Adding To Your Project
 
@@ -11,102 +9,181 @@ Add the following dependency to your Maven pom.xml
 ```xml
     <dependency>
       <groupId>io.github.ci-cmg</groupId>
-      <artifactId>aws-s3-outputstream</artifactId>
-      <version>1.0.0</version>
+      <artifactId>aws-s3-cloudformation-utils</artifactId>
+      <version>1.0.0-SNAPSHOT</version>
     </dependency>
 ```
 
+## Required Project Structure
+***Note***: Project structure is only required if a user wants to stand up and delete CloudFormation stacks via the "operations" package.
+Utilities used by this package such as S3Operations and CloudFormationOperations do not require a project structure.
+
+
+The following is the required project structure for use of the "operations" package.
+
+```
+cloudformation-module
+|                   |
+|                   assembly
+|                   |      |
+|                   |      dist.xml
+|                   |
+|                   src
+|                   | |
+|                   | cloudformation
+|                   |              |
+|                   |              deploy
+|                   |              |    |
+|                   |              |    deployment-stack.yaml
+|                   |              |
+|                   |              stack
+|                   |                  |
+|                   |                  application-stack.yaml
+|                   |            
+|                   pom.xml
+|
+project-module
+             |
+             parameters
+             |        |
+             |        deployment-stack-parameters.json
+             |        application-stack-parameters.json
+             |
+             pom.xml
+```
+***cloudformation-module:*** module containing CloudFormation templates
+* assembly/dist.xml: contains instructions for module to be packaged as a zip file on install
+* src/cloudformation:
+  * deploy/deployment-stack.yaml: CloudFormation template for deployment stack. Needs at least an S3 bucket
+  * stack/application-stack.yaml: CloudFormation template for application stack
+
+***project-module:*** module containing aws-s3-cloudformation-utils dependency
+* parameters:
+  * deployment-stack-parameters.json: deployment stack parameters
+  * application-stack-parameters.json: application stack parameters
+
+## Workflow
+This project is designed to receive a bundle of CloudFormation templates as a zip file. Once decompressed, this bundle 
+is uploaded to an S3 bucket which is set up by the deployment stack. After this upload, the deployment stack's S3 bucket 
+is utilized to provide the necessary templates for the application stack.
+
+1. CloudFormation template bundle received as zip file
+2. Unzip CloudFormation template bundle
+3. Create S3 bucket from deployment stack template (along with rest of deployment stack)
+4. Upload CloudFormation template bundle to deployment stack's S3 bucket
+5. Use deployment stack's S3 bucket contents to create application stack
+6. Utilize application and deployment stacks
+7. Delete stacks
+
 ## Usage
 
-The minimal way to create a S3OutputStream is as follows:
+### Java
+#### Create deployment/application stacks
 ```java
-OutputStream out = S3OutputStream.builder().s3(s3).bucket(bucketName).key(key).build();
+CloudFormationOperations cf = new CloudFormationOperationsImpl(AmazonCloudFormationClientBuilder.defaultClient());
+S3Operations s3 = new S3OperationsImpl(AmazonS3ClientBuilder.defaultClient());
+ObjectMapper objectMapper = ObjectMapperCreator.create();
+
+CreateStack createStack = new CreateStack(cf, s3, objectMapper);
+
+createStack.run(
+    version,
+    cfBaseDir,
+    baseDir,
+    cfPrefix,
+    deploymentParamsName,
+    stackParamsName,
+    applicationStackName
+    );
+```
+***parameters***:
+* version: your project version
+* cfBaseDir: base directory of module containing CloudFormation templates
+* baseDir: your project base directory
+* cfPrefix: name of module containing CloudFormation templates
+* deploymentParamsName: name of deployment stack parameters file
+* stackParamsName: name of application stack parameters file
+* applicationStackName: name of application stack CloudFormation template file
+
+***parameters*** (from project structure section):
+* cfBaseDir: absolute/path/to/cloudformation-module
+* baseDir: absolute/path/to/project-module
+* cfPrefix: cloudformation-module
+* deploymentParamsName: deployment-stack-parameters.json
+* stackParamsName: application-stack-parameters.json
+* applicationStackName: application-stack.yaml
+
+#### Delete deployment/application stacks
+```java
+CloudFormationOperations cf = new CloudFormationOperationsImpl(AmazonCloudFormationClientBuilder.defaultClient());
+S3Operations s3 = new S3OperationsImpl(AmazonS3ClientBuilder.defaultClient());
+
+DeleteStack deleteStack = DeleteStack(cf, s3);
+deleteStack.run(baseDir);
+```
+***parameters***:
+* basedir: your project base directory
+
+***parameters*** (from project structure section):
+* baseDir: absolute/path/to/project-module
+
+
+### Command Line via Maven
+
+#### Setup
+Command line integration can be achieved using the maven-exec-plugin in your pom.xml:
+
+```xml
+<plugin>
+    <artifactId>exec-maven-plugin</artifactId>
+    <groupId>org.codehaus.mojo</groupId>
+    <version>3.0.0</version>
+    <executions>
+      <execution>
+        <id>create-stack</id>
+        <goals>
+          <goal>java</goal>
+        </goals>
+        <configuration>
+          <mainClass>edu.colorado.cires.cmg.s3cfutils.operations.StackOperations</mainClass>
+          <arguments>
+            <argument>create-stack</argument>
+            <argument>${project.version}</argument>
+            <argument>absolute/path/to/cloudformation-module</argument>
+            <argument>${project.basedir}</argument>
+            <argument>cloudformation-module</argument>
+            <argument>deployment-stack-parameters.json</argument>
+            <argument>application-stack-parameters.json</argument>
+            <argument>application-stack.yaml</argument>
+          </arguments>
+        </configuration>
+      </execution>
+      <execution>
+        <id>delete-stack</id>
+        <goals>
+          <goal>java</goal>
+        </goals>
+        <configuration>
+          <mainClass>edu.colorado.cires.cmg.s3cfutils.operations.StackOperations</mainClass>
+          <arguments>
+            <argument>delete-stack</argument>
+            <argument>${project.basedir}</argument>
+          </arguments>
+        </configuration>
+      </execution>
+    </executions>
+</plugin>
 ```
 
-Where in the above example s3 is an instance of S3ClientMultipartUpload (described below), bucketName is the name of
-a S3 bucket, and key is the key that will be uploaded to in the bucket.
+#### Create deployment/application stacks
 
-Here is how to create a S3OutputStream with all the available options:
-```java
-OutputStream out = S3OutputStream.builder()
-    .s3(s3)
-    .bucket(bucketName)
-    .key(key)
-    .partSizeMib(partSizeMib)
-    .uploadQueueSize(queueSize)
-    .autoComplete(true)
-    .build();
+```shell
+mvn -Daws.profile=aws_profile -Daws.region=aws_region exec:java@create-stack
 ```
 
-### S3ClientMultipartUpload
-s3 is an instance of S3ClientMultipartUpload.  The S3ClientMultipartUpload is a wrapper
-around the S3Client from the AWS SDK v2.  This allows for calls to the S3Client to
-be mocked for testing.  Two implementations are provided:
+#### Delete deployment/application stacks
 
-1. AwsS3ClientMultipartUpload - This uses the S3Client to make calls using the AWS SDK.
-2. FileMockS3ClientMultipartUpload - This reads and writes from the local file system. This should only be used for testing.
-
-An instance of AwsS3ClientMultipartUpload can be created as follows:
-```java
-S3ClientMultipartUpload s3 = AwsS3ClientMultipartUpload.builder()
-    .s3(s3)
-    .contentTypeResolver(contentTypeResolver)
-    .build();
+```shell
+mvn -Daws.profile=aws_profile -Daws.region=aws_region exec:java@delete-stack
 ```
-
-The contentTypeResolver resolves the MIME type for files uploaded to S3. A default
-implementation is provided if not specified in the AwsS3ClientMultipartUpload builder.
-An instance of NoContentTypeResolver can be provided if MIME types should not be used.
-
-### Upload Performance
-A S3OutputStream uploads a file in parts. partSizeMib represents the size of the parts to
-upload in MiB.  This value must be at least 5, which is the default.
-
-A S3OutputStream uses a queue to allow multipart uploads to S3 to happen while additional
-buffers are being filled concurrently. The uploadQueueSize defines the number of parts
-to be queued before blocking population of additional parts.  The default value is 1.
-Specifying a higher value may improve upload speed at the expense of more heap usage.
-Using a value higher than one should be tested to see if any performance gains are achieved
-for your situation.
-
-### Auto Completion
-When a multipart file upload is completed, AWS S3 must be notified. Autocompletion is a
-convenience feature that allows a S3OutputStream to work like a normal java.io.OutputStream.  The
-main use case for this is where your code generates a S3OutputStream that must be
-passed to another library as a java.io.OutputStream that you do not control that is responsible for closing
-it. With autocompletion enabled, the AWS completion notification will always happen
-when the OutputStream is closed. This is fine, unless an exception occurs and close()
-is called in a finally block or try-with-resources (as should always be done).  In this
-scenario, the upload will be completed even if there was an error, rather than aborting
-the upload.  To ensure compatibility with java.io.OutputStream, autocompletion is enabled
-by default.
-
-If you have control over the code closing the S3OutputStream it is best to disable autocompletion
-as follows:
-```java
-    try (
-        InputStream inputStream = Files.newInputStream(source);
-        S3OutputStream s3OutputStream = S3OutputStream.builder()
-            .s3(s3)
-            .bucket(bucket)
-            .key(key)
-            .autoComplete(false)
-            .build();
-    ) {
-      IOUtils.copy(inputStream, outputStream);
-      s3OutputStream.done();
-    }
-```
-
-Note the call to s3OutputStream.done(). This should be called after all data has been uploaded, before
-calling close or the end of the try-with-resources block. This signals that the upload was successful
-and when the S3OutputStream is closed, the completion signal will be sent. If done() is not called
-before close() and error was assumed to have occurred and an abort signal will be send in close()
-instead.
-
-
-
-
-
-
 
