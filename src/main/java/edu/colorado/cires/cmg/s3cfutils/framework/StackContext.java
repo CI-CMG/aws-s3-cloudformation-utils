@@ -1,5 +1,8 @@
-package edu.colorado.cires.cmg.awsdatautils.e2e.framework;
+package edu.colorado.cires.cmg.s3cfutils.framework;
 
+/**
+ * Identifying information belonging to CloudFormation stacks
+ */
 public class StackContext {
 
   private final String deploymentStackName;
@@ -41,6 +44,11 @@ public class StackContext {
       return new Builder();
     }
 
+    /**
+     * Configures a test stack with predefined identifying information
+     * @param id the stack id
+     * @return
+     */
     public static Builder configureTest(String id) {
       String deploymentStackName = String.format("%s-deployment", id);
       String stackName = String.format("%s-stack", id);

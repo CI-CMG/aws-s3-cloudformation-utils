@@ -1,8 +1,11 @@
-package edu.colorado.cires.cmg.awsdatautils.e2e.framework;
+package edu.colorado.cires.cmg.s3cfutils.framework;
 
 import com.amazonaws.services.cloudformation.model.Parameter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * CloudFormation stack parameter key/value pair
+ */
 public class ParameterKeyValue {
     @JsonProperty("ParameterKey")
     private String parameterKey;
@@ -34,6 +37,10 @@ public class ParameterKeyValue {
         return this;
     }
 
+    /**
+     * Converts key/value to {@link Parameter}
+     * @return {@link Parameter} generated from parameter key and parameter value
+     */
     public Parameter toParameter() {
         return (new Parameter()).withParameterKey(this.parameterKey).withParameterValue(this.parameterValue);
     }

@@ -1,4 +1,4 @@
-package edu.colorado.cires.cmg.awsdatautils.e2e.framework;
+package edu.colorado.cires.cmg.s3cfutils.framework;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -7,6 +7,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
+/**
+ * Custom implementation of ObjectMapperCreator. Serializes Double values with {@link DoubleSerializer}
+ */
 public final class ObjectMapperCreator {
     public static ObjectMapper create() {
         SimpleModule module = new SimpleModule();

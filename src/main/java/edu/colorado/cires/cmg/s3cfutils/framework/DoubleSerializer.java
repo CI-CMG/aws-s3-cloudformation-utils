@@ -1,4 +1,4 @@
-package edu.colorado.cires.cmg.awsdatautils.e2e.framework;
+package edu.colorado.cires.cmg.s3cfutils.framework;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
@@ -9,6 +9,9 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.Locale;
 
+/**
+ * Utility for serializing values of type {@link Double}
+ */
 public class DoubleSerializer extends StdSerializer<Double> {
     public DoubleSerializer() {
         this((Class)null);
@@ -18,6 +21,13 @@ public class DoubleSerializer extends StdSerializer<Double> {
         super(t);
     }
 
+    /**
+     * Serializes values of type {@link Double}
+     * @param value the decimal value
+     * @param gen the {@link JsonGenerator} to write serialized values
+     * @param provider the {@link SerializerProvider} to process input values
+     * @throws IOException
+     */
     public void serialize(Double value, JsonGenerator gen, SerializerProvider provider) throws IOException {
         if (value == null) {
             gen.writeNull();

@@ -1,15 +1,21 @@
-package edu.colorado.cires.cmg.awsdatautils.e2e.operations;
+package edu.colorado.cires.cmg.s3cfutils.operations;
 
 import com.amazonaws.services.cloudformation.AmazonCloudFormationClientBuilder;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.colorado.cires.cmg.awsdatautils.e2e.framework.*;
+import edu.colorado.cires.cmg.s3cfutils.framework.CloudFormationOperations;
+import edu.colorado.cires.cmg.s3cfutils.framework.CloudFormationOperationsImpl;
+import edu.colorado.cires.cmg.s3cfutils.framework.ObjectMapperCreator;
+import edu.colorado.cires.cmg.s3cfutils.framework.S3Operations;
+import edu.colorado.cires.cmg.s3cfutils.framework.S3OperationsImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 
-
+/**
+ * CloudFormation stack operations from command line parameters
+ */
 public class StackOperations {
 
 

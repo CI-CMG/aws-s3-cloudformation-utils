@@ -1,10 +1,10 @@
-package edu.colorado.cires.cmg.awsdatautils.e2e.operations;
+package edu.colorado.cires.cmg.s3cfutils.operations;
 
 
-import edu.colorado.cires.cmg.awsdatautils.e2e.framework.CloudFormationOperations;
-import edu.colorado.cires.cmg.awsdatautils.e2e.framework.ParameterKeyValue;
-import edu.colorado.cires.cmg.awsdatautils.e2e.framework.S3Operations;
-import edu.colorado.cires.cmg.awsdatautils.e2e.framework.StackContext;
+import edu.colorado.cires.cmg.s3cfutils.framework.CloudFormationOperations;
+import edu.colorado.cires.cmg.s3cfutils.framework.ParameterKeyValue;
+import edu.colorado.cires.cmg.s3cfutils.framework.S3Operations;
+import edu.colorado.cires.cmg.s3cfutils.framework.StackContext;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -22,11 +22,26 @@ import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+/**
+ * Utilities for CloudFormation stack operations
+ */
 public final class OperationUtils {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(OperationUtils.class);
 
-  public static void createOrUpdateStack(
+  /**
+   * Creates a deployment stack and an application stack
+   * @param cf {@link CloudFormationOperations} for interaction between cloud formation templates and stacks
+   * @param s3 {@link S3Operations} for interaction with S3 objects
+   * @param stackContext the uniquely identifying {@link StackContext} for the stacks
+   * @param cfBaseDir the location of the module CloudFormation templates are located in
+   * @param version the project version
+   * @param deploymentParameters List of {@link ParameterKeyValue} for deployment stack template
+   * @param stackParameters List of {@link ParameterKeyValue} for application stack template
+   * @param cfPrefix the name of the module CloudFormation templates are located in
+   * @param applicationStackName the application stack template file name
+   */
+  public static void createStacks(
       CloudFormationOperations cf,
       S3Operations s3,
       StackContext stackContext,
@@ -63,6 +78,13 @@ public final class OperationUtils {
     }
   }
 
+  /**
+   * Creates a deployment stack
+   * @param cf {@link CloudFormationOperations} for interaction between cloud formation templates and stacks
+   * @param bundleDir location of zip file containing CloudFormation template bundle
+   * @param stackContext the uniquely identifying {@link StackContext} for the stacks
+   * @param parameters List of {@link ParameterKeyValue} for deployment stack template
+   */
   public static void createDeploymentStack(CloudFormationOperations cf, Path bundleDir, StackContext stackContext,
       List<ParameterKeyValue> parameters) {
 
@@ -82,6 +104,13 @@ public final class OperationUtils {
     LOGGER.info("Done Creating Stack: {}", stackName);
   }
 
+  /**
+   * Creates an application stack
+   * @param cf {@link CloudFormationOperations} for interaction between cloud formation templates and stacks
+   * @param stackContext the uniquely identifying {@link StackContext} for the stacks
+   * @param parameters List of {@link ParameterKeyValue} for application stack template
+   * @param applicationStackName the application stack template file name
+   */
   public static void createStack(CloudFormationOperations cf, StackContext stackContext, List<ParameterKeyValue> parameters, String applicationStackName) {
 
     String stackName = stackContext.getStackName();
@@ -96,6 +125,12 @@ public final class OperationUtils {
     LOGGER.info("Done Creating Stack: {}", stackName);
   }
 
+  /**
+   * Uploads CloudFormation templates to S3 bucket
+   * @param s3 {@link S3Operations} for interaction with S3 objects
+   * @param bundleDir location of zip file containing CloudFormation template bundle
+   * @param bucketName the bucket name
+   */
   public static void hardSyncBucket(
       S3Operations s3,
       Path bundleDir,
@@ -111,6 +146,11 @@ public final class OperationUtils {
     LOGGER.info("Done Syncing {} to S3 Bucket {}", bundleDir.toString(), bucketName);
   }
 
+  /**
+   * Empties an S3 bucket
+   * @param s3 {@link S3Operations} for interaction with S3 objects
+   * @param bucketName the bucket name
+   */
   public static void emptyBucket(S3Operations s3, String bucketName) {
 
     LOGGER.info("Emptying Bucket: {}", bucketName);
@@ -127,6 +167,11 @@ public final class OperationUtils {
 
   }
 
+  /**
+   * Unzips CloudFormation templates
+   * @param bundle location of zip file containing CloudFormation template bundle
+   * @param targetDir location of target directory within the module containing CloudFormation templates
+   */
   public static void unzip(Path bundle, Path targetDir) {
 
     LOGGER.info("Unzipping CloudFormation Bundle: {}", bundle.toString());

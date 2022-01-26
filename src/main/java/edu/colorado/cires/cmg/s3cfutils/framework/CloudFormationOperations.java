@@ -1,9 +1,9 @@
-package edu.colorado.cires.cmg.awsdatautils.e2e.framework;
+package edu.colorado.cires.cmg.s3cfutils.framework;
 
 import java.util.List;
 
 /**
- *
+ * Operations for interaction between cloud formation templates and stacks
  */
 public interface CloudFormationOperations {
 
@@ -14,7 +14,7 @@ public interface CloudFormationOperations {
     void deleteStackAndWait(String stackName);
 
     /**
-     * Creates a stack from filesystem and waits for completion
+     * Creates a stack from a template body and waits for completion
      * @param stackName the name of the stack
      * @param templateBody content of CloudFormation template
      * @param parameters a list of {@link ParameterKeyValue} for the template

@@ -1,15 +1,18 @@
-package edu.colorado.cires.cmg.awsdatautils.e2e.operations;
+package edu.colorado.cires.cmg.s3cfutils.operations;
 
-import edu.colorado.cires.cmg.awsdatautils.e2e.framework.CloudFormationOperations;
-import edu.colorado.cires.cmg.awsdatautils.e2e.framework.ITUtils;
-import edu.colorado.cires.cmg.awsdatautils.e2e.framework.S3Operations;
-import edu.colorado.cires.cmg.awsdatautils.e2e.framework.StackContext;
+import edu.colorado.cires.cmg.s3cfutils.framework.CloudFormationOperations;
+import edu.colorado.cires.cmg.s3cfutils.framework.ITUtils;
+import edu.colorado.cires.cmg.s3cfutils.framework.S3Operations;
+import edu.colorado.cires.cmg.s3cfutils.framework.StackContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+/**
+ * Utilities for deleting a CloudFormation stack
+ */
 public class DeleteStack {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DeleteStack.class);
@@ -22,6 +25,10 @@ public class DeleteStack {
     this.s3 = s3;
   }
 
+  /**
+   * Empties an S3 bucket
+   * @param bucket the bucket name
+   */
   private void emptyBucket(String bucket) {
     try {
       OperationUtils.emptyBucket(s3, bucket);
@@ -30,6 +37,10 @@ public class DeleteStack {
     }
   }
 
+  /**
+   * Empties deployment bucket, deletes deployment stack and deletes application stack
+   * @param baseDir the project base directory
+   */
   public void run(String baseDir) {
     Path targetDir = Paths.get(baseDir).resolve("target");
     String id = ITUtils.readId(targetDir);
@@ -42,6 +53,10 @@ public class DeleteStack {
     LOGGER.info("Done Deleting AWS Test Resources: {}", id);
   }
 
+  /**
+   * Deletes a stack and waits for completion
+   * @param stackName the stack name
+   */
   private void deleteStack(String stackName) {
 
     LOGGER.info("Deleting Stack: {}", stackName);

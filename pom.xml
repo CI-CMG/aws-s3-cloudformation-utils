@@ -9,7 +9,7 @@
   <version>1.0.0-SNAPSHOT</version>
 
   <name>${project.groupId}:${project.artifactId}</name>
-  <description>Utilities for CloudFormation Startup from S3 Bucket</description>
+  <description>Utilities for cloudFormation startup from S3 bucket</description>
   <url>https://github.com/CI-CMG/aws-s3-cloudformation-utils</url>
 
   <licenses>

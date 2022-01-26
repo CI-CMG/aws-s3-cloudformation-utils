@@ -1,12 +1,11 @@
-package edu.colorado.cires.cmg.awsdatautils.e2e.operations;
+package edu.colorado.cires.cmg.s3cfutils.operations;
 
-import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.colorado.cires.cmg.awsdatautils.e2e.framework.CloudFormationOperations;
-import edu.colorado.cires.cmg.awsdatautils.e2e.framework.ParameterKeyValue;
-import edu.colorado.cires.cmg.awsdatautils.e2e.framework.S3Operations;
-import edu.colorado.cires.cmg.awsdatautils.e2e.framework.StackContext;
+import edu.colorado.cires.cmg.s3cfutils.framework.CloudFormationOperations;
+import edu.colorado.cires.cmg.s3cfutils.framework.ParameterKeyValue;
+import edu.colorado.cires.cmg.s3cfutils.framework.S3Operations;
+import edu.colorado.cires.cmg.s3cfutils.framework.StackContext;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
@@ -19,6 +18,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
+/**
+ * Utilities for creating a CloudFormation stack
+ */
 public class CreateStack {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(CreateStack.class);
@@ -36,6 +38,16 @@ public class CreateStack {
     this.objectMapper = objectMapper;
   }
 
+  /**
+   * Creates deployment and application stack
+   * @param version the project version
+   * @param cfBaseDir the location of the module CloudFormation templates are located in
+   * @param baseDir the project base directory
+   * @param cfPrefix the name of the module CloudFormation templates are located in
+   * @param deploymentParamsName the deployment parameters file name
+   * @param stackParamsName the stack parameters file name
+   * @param applicationStackName the application stack template file name
+   */
   public void run(String version, String cfBaseDir, String baseDir, String cfPrefix, String deploymentParamsName, String stackParamsName, String applicationStackName) {
 
     String id = String.format("test-%s", RandomStringUtils.random(8, true, true)).toLowerCase(Locale.ENGLISH);
@@ -52,7 +64,7 @@ public class CreateStack {
     Path targetDir = Paths.get(baseDir).resolve("target");
     writeIdFile(targetDir, id);
 
-    OperationUtils.createOrUpdateStack(
+    OperationUtils.createStacks(
         cf,
         s3,
         stackContext,
@@ -68,9 +80,11 @@ public class CreateStack {
   }
 
 
-
-
-
+  /**
+   * Writes stack id/prefix to text file
+   * @param target the maven target directory path
+   * @param id the unique stack id/prefix
+   */
   private void writeIdFile(Path target, String id) {
 
     LOGGER.info("Writing ID File: {}", id);
@@ -86,6 +100,12 @@ public class CreateStack {
     LOGGER.info("Done Writing ID File: {}", id);
   }
 
+  /**
+   * Gets parameters for deployment stack
+   * @param deployParams the deployment parameter file name
+   * @param stackContext the uniquely identifying {@link StackContext} for the stacks
+   * @return List of {@link ParameterKeyValue} for deployment stack template
+   */
   private List<ParameterKeyValue> getDeploymentParameters(Path deployParams, StackContext stackContext) {
     try {
       List<ParameterKeyValue> kvs = objectMapper.readValue(deployParams.toFile(), LIST_PKV);
@@ -98,6 +118,11 @@ public class CreateStack {
     }
   }
 
+  /**
+   * Gets system properties matching a given prefix
+   * @param prefix the system property prefix
+   * @return List of {@link ParameterKeyValue} that match the system property prefix
+   */
   private List<ParameterKeyValue> getSystemProps(String prefix) {
     List<ParameterKeyValue> keyValues = new ArrayList<>();
     System.getProperties().forEach((k,v) -> {
@@ -111,7 +136,12 @@ public class CreateStack {
     });
     return keyValues;
   }
-
+   /**
+   * Gets parameters for application stack
+   * @param paramsPath the application stack parameter file name
+   * @param stackContext the uniquely identifying {@link StackContext} for the stacks
+   * @return List of {@link ParameterKeyValue} for application stack template
+   */
   private List<ParameterKeyValue> getParameters(Path paramsPath, StackContext stackContext) {
     try {
       List<ParameterKeyValue> kvs = objectMapper.readValue(paramsPath.toFile(), LIST_PKV);
