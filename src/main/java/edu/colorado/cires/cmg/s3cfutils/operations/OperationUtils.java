@@ -76,6 +76,7 @@ public final class OperationUtils {
     } else {
       throw new UnsupportedOperationException("Stack already exists: " + stackContext.getStackName());
     }
+
   }
 
   /**

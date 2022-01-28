@@ -1,11 +1,15 @@
 package edu.colorado.cires.cmg.s3cfutils.operations;
 
+import com.amazonaws.services.cloudformation.model.DescribeStacksRequest;
+import com.amazonaws.services.cloudformation.model.Output;
+import com.amazonaws.services.cloudformation.model.Stack;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.colorado.cires.cmg.s3cfutils.framework.CloudFormationOperations;
 import edu.colorado.cires.cmg.s3cfutils.framework.ParameterKeyValue;
 import edu.colorado.cires.cmg.s3cfutils.framework.S3Operations;
 import edu.colorado.cires.cmg.s3cfutils.framework.StackContext;
+import java.io.OutputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
@@ -48,7 +52,8 @@ public class CreateStack {
    * @param stackParamsName the stack parameters file name
    * @param applicationStackName the application stack template file name
    */
-  public void run(String version, String cfBaseDir, String baseDir, String cfPrefix, String deploymentParamsName, String stackParamsName, String applicationStackName) {
+  public void run(String version, String cfBaseDir, String baseDir, String cfPrefix, String deploymentParamsName,
+      String stackParamsName, String applicationStackName, boolean writeStackOutputs) {
 
     String id = String.format("test-%s", RandomStringUtils.random(8, true, true)).toLowerCase(Locale.ENGLISH);
 
@@ -77,6 +82,43 @@ public class CreateStack {
     );
 
     LOGGER.info("Done Creating AWS Test Resources: {}", id);
+
+    if (writeStackOutputs) {
+
+      writeOutputPropertiesFile(cf, targetDir, id, stackContext);
+
+    }
+
+  }
+
+  private void writeOutputPropertiesFile(CloudFormationOperations cf, Path target, String id, StackContext stackContext) {
+
+    LOGGER.info("Writing Stack Properties File: {}", id);
+
+    try {
+
+      Path file = target.resolve("test-stack.properties");
+      Files.deleteIfExists(file);
+
+      DescribeStacksRequest request = new DescribeStacksRequest().withStackName(stackContext.getStackName());
+
+      List<Output> outputs = cf.getStackOutputs(request);
+
+      for (Output output: outputs) {
+
+        String property = String.format("%s=%s", output.getOutputKey(), output.getOutputValue()) + "\n";
+        FileUtils.writeStringToFile(file.toFile(), property, StandardCharsets.UTF_8);
+
+      }
+
+    } catch (IOException e) {
+
+      throw new RuntimeException("Unable to write properties file", e);
+
+    }
+
+    LOGGER.info("Done Writing Stack Properties File: {}", id);
+
   }
 
 

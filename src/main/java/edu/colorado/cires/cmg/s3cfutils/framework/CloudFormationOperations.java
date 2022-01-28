@@ -1,5 +1,7 @@
 package edu.colorado.cires.cmg.s3cfutils.framework;
 
+import com.amazonaws.services.cloudformation.model.DescribeStacksRequest;
+import com.amazonaws.services.cloudformation.model.Output;
 import java.util.List;
 
 /**
@@ -35,4 +37,8 @@ public interface CloudFormationOperations {
      * @return true if the stack exists
      */
     boolean stackExists(String stackName);
+
+
+    List<Output> getStackOutputs(DescribeStacksRequest request);
+
 }

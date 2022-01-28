@@ -10,7 +10,9 @@ import com.amazonaws.services.cloudformation.model.Capability;
 import com.amazonaws.services.cloudformation.model.CreateStackRequest;
 import com.amazonaws.services.cloudformation.model.DeleteStackRequest;
 import com.amazonaws.services.cloudformation.model.DescribeStacksRequest;
+import com.amazonaws.services.cloudformation.model.DescribeStacksResult;
 import com.amazonaws.services.cloudformation.model.ListStacksRequest;
+import com.amazonaws.services.cloudformation.model.Output;
 import com.amazonaws.services.cloudformation.model.StackStatus;
 import com.amazonaws.services.cloudformation.model.StackSummary;
 import com.amazonaws.services.cloudformation.model.UpdateStackRequest;
@@ -72,5 +74,13 @@ public class CloudFormationOperationsImpl implements CloudFormationOperations {
             return true;
         }).orElse(false);
     }
+
+    public List<Output> getStackOutputs(DescribeStacksRequest request) {
+
+        DescribeStacksResult result = cf.describeStacks(request);
+        return result.getStacks().get(0).getOutputs();
+
+    }
+
 }
 

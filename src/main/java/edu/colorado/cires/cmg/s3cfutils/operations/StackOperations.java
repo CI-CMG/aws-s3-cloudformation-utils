@@ -38,8 +38,9 @@ public class StackOperations {
         String deploymentParamsName = args[5].trim();
         String stackParamsName = args[6].trim();
         String applicationStackName = args[7].trim();
+        boolean writeStackOutputs = Boolean.parseBoolean(args[8]);
         new CreateStack(cf, s3, objectMapper).run(version, cfBaseDir, baseDir,
-                cfPrefix, deploymentParamsName, stackParamsName, applicationStackName);
+                cfPrefix, deploymentParamsName, stackParamsName, applicationStackName, writeStackOutputs);
       }
       break;
       case "delete-stack":
