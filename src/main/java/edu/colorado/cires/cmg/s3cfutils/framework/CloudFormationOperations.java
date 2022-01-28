@@ -38,7 +38,11 @@ public interface CloudFormationOperations {
      */
     boolean stackExists(String stackName);
 
-
+    /**
+     * Gets template outputs for a given stack
+     * @param request {@link DescribeStacksRequest} containing the stack name
+     * @return List of {@link Output} if outputs were included in the template
+     */
     List<Output> getStackOutputs(DescribeStacksRequest request);
 
 }

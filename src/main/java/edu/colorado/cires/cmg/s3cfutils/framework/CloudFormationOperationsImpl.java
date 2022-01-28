@@ -75,6 +75,11 @@ public class CloudFormationOperationsImpl implements CloudFormationOperations {
         }).orElse(false);
     }
 
+    /**
+     * Gets template outputs for a given stack
+     * @param request {@link DescribeStacksRequest} containing the stack name
+     * @return List of {@link Output} if outputs were included in the template
+     */
     public List<Output> getStackOutputs(DescribeStacksRequest request) {
 
         DescribeStacksResult result = cf.describeStacks(request);

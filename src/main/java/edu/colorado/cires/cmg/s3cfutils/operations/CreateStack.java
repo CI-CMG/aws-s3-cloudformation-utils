@@ -91,6 +91,13 @@ public class CreateStack {
 
   }
 
+  /**
+   * Writes a properties file from application stack outputs
+   * @param cf {@link CloudFormationOperations} for interaction between cloud formation templates and stacks
+   * @param target the maven target directory path
+   * @param id the stack id/prefix
+   * @param stackContext the uniquely identifying {@link StackContext} for the stacks
+   */
   private void writeOutputPropertiesFile(CloudFormationOperations cf, Path target, String id, StackContext stackContext) {
 
     LOGGER.info("Writing Stack Properties File: {}", id);

@@ -93,7 +93,8 @@ createStack.run(
     cfPrefix,
     deploymentParamsName,
     stackParamsName,
-    applicationStackName
+    applicationStackName,
+    writeStackOutput
     );
 ```
 ***parameters***:
@@ -104,6 +105,7 @@ createStack.run(
 * deploymentParamsName: name of deployment stack parameters file
 * stackParamsName: name of application stack parameters file
 * applicationStackName: name of application stack CloudFormation template file
+* writeStackOutput: optionally write the specified outputs from application stack template
 
 ***parameters*** (from project structure section):
 * cfBaseDir: absolute/path/to/cloudformation-module
@@ -155,6 +157,7 @@ Command line integration can be achieved using the maven-exec-plugin in your pom
             <argument>deployment-stack-parameters.json</argument>
             <argument>application-stack-parameters.json</argument>
             <argument>application-stack.yaml</argument>
+            <argument>false</argument>
           </arguments>
         </configuration>
       </execution>
