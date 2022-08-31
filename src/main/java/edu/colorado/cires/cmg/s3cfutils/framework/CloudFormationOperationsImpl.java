@@ -5,6 +5,7 @@ package edu.colorado.cires.cmg.s3cfutils.framework;
 // (powered by FernFlower decompiler)
 //
 
+import com.amazonaws.services.cloudformation.AbstractAmazonCloudFormation;
 import com.amazonaws.services.cloudformation.AmazonCloudFormation;
 import com.amazonaws.services.cloudformation.model.Capability;
 import com.amazonaws.services.cloudformation.model.CreateStackRequest;
