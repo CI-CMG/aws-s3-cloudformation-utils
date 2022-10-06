@@ -1,26 +1,25 @@
 package edu.colorado.cires.cmg.s3cfutils.operations;
 
-import com.amazonaws.services.cloudformation.model.DescribeStacksRequest;
-import com.amazonaws.services.cloudformation.model.Output;
-import com.amazonaws.services.cloudformation.model.Stack;
+import static edu.colorado.cires.cmg.s3cfutils.operations.OperationUtils.writeOutputsToFile;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.colorado.cires.cmg.s3cfutils.framework.CloudFormationOperations;
 import edu.colorado.cires.cmg.s3cfutils.framework.ParameterKeyValue;
 import edu.colorado.cires.cmg.s3cfutils.framework.S3Operations;
 import edu.colorado.cires.cmg.s3cfutils.framework.StackContext;
-import java.io.OutputStream;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Utilities for creating a CloudFormation stack
@@ -48,12 +47,12 @@ public class CreateStack {
    * @param cfBaseDir the location of the module CloudFormation templates are located in
    * @param baseDir the project base directory
    * @param cfPrefix the name of the module CloudFormation templates are located in
-   * @param deploymentParamsName the deployment parameters file name
-   * @param stackParamsName the stack parameters file name
-   * @param applicationStackName the application stack template file name
+   * @param deploymentParamsPath the deployment parameters file path
+   * @param stackParamsPath the stack parameters file path
+   * @param applicationStackFileName the application stack template file name
    */
-  public void run(String version, String cfBaseDir, String baseDir, String cfPrefix, String deploymentParamsName,
-      String stackParamsName, String applicationStackName, boolean writeStackOutputs) {
+  public void run(String version, String cfBaseDir, String baseDir, String cfPrefix, String deploymentParamsPath,
+      String stackParamsPath, String applicationStackFileName, boolean writeStackOutputs) {
 
     String id = String.format("test-%s", RandomStringUtils.random(8, true, true)).toLowerCase(Locale.ENGLISH);
 
@@ -61,15 +60,15 @@ public class CreateStack {
 
     StackContext stackContext = StackContext.Builder.configureTest(id).build();
 
-    Path deployParams = Paths.get(baseDir).resolve("parameters").resolve(deploymentParamsName);
-    Path params = Paths.get(baseDir).resolve("parameters").resolve(stackParamsName);
+    Path deployParams = Paths.get(deploymentParamsPath);
+    Path params = Paths.get(stackParamsPath);
     List<ParameterKeyValue> deploymentParameters = getDeploymentParameters(deployParams, stackContext);
     List<ParameterKeyValue> stackParameters = getParameters(params, stackContext);
 
     Path targetDir = Paths.get(baseDir).resolve("target");
     writeIdFile(targetDir, id);
 
-    OperationUtils.createStacks(
+    OperationUtils.createOrUpdateStack(
         cf,
         s3,
         stackContext,
@@ -78,53 +77,16 @@ public class CreateStack {
         deploymentParameters,
         stackParameters,
         cfPrefix,
-        applicationStackName
+        applicationStackFileName,
+        applicationStackFileName,
+        baseDir
     );
 
     LOGGER.info("Done Creating AWS Test Resources: {}", id);
 
     if (writeStackOutputs) {
-
-      writeOutputPropertiesFile(cf, targetDir, id, stackContext);
-
+      writeOutputsToFile(cf, targetDir, id, stackContext);
     }
-
-  }
-
-  /**
-   * Writes a properties file from application stack outputs
-   * @param cf {@link CloudFormationOperations} for interaction between cloud formation templates and stacks
-   * @param target the maven target directory path
-   * @param id the stack id/prefix
-   * @param stackContext the uniquely identifying {@link StackContext} for the stacks
-   */
-  private void writeOutputPropertiesFile(CloudFormationOperations cf, Path target, String id, StackContext stackContext) {
-
-    LOGGER.info("Writing Stack Properties File: {}", id);
-
-    try {
-
-      Path file = target.resolve("test-stack.properties");
-      Files.deleteIfExists(file);
-
-      DescribeStacksRequest request = new DescribeStacksRequest().withStackName(stackContext.getStackName());
-
-      List<Output> outputs = cf.getStackOutputs(request);
-
-      for (Output output: outputs) {
-
-        String property = String.format("%s=%s", output.getOutputKey(), output.getOutputValue()) + "\n";
-        FileUtils.writeStringToFile(file.toFile(), property, StandardCharsets.UTF_8);
-
-      }
-
-    } catch (IOException e) {
-
-      throw new RuntimeException("Unable to write properties file", e);
-
-    }
-
-    LOGGER.info("Done Writing Stack Properties File: {}", id);
 
   }
 

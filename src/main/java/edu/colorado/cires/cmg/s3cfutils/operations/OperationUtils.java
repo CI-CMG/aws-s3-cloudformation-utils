@@ -1,6 +1,8 @@
 package edu.colorado.cires.cmg.s3cfutils.operations;
 
 
+import com.amazonaws.services.cloudformation.model.DescribeStacksRequest;
+import com.amazonaws.services.cloudformation.model.Output;
 import edu.colorado.cires.cmg.s3cfutils.framework.CloudFormationOperations;
 import edu.colorado.cires.cmg.s3cfutils.framework.ParameterKeyValue;
 import edu.colorado.cires.cmg.s3cfutils.framework.S3Operations;
@@ -41,7 +43,7 @@ public final class OperationUtils {
    * @param cfPrefix the name of the module CloudFormation templates are located in
    * @param applicationStackName the application stack template file name
    */
-  public static void createStacks(
+  public static void createOrUpdateStack(
       CloudFormationOperations cf,
       S3Operations s3,
       StackContext stackContext,
@@ -50,7 +52,9 @@ public final class OperationUtils {
       List<ParameterKeyValue> deploymentParameters,
       List<ParameterKeyValue> stackParameters,
       String cfPrefix,
-      String applicationStackName
+      String applicationStackName,
+      String applicationStackFileName,
+      String baseDir
       ) {
 
     Path cfTargetDir = Paths.get(cfBaseDir).resolve("target");
@@ -66,15 +70,18 @@ public final class OperationUtils {
       createDeploymentStack(cf, bundleDir, stackContext, deploymentParameters);
     }
 
-    hardSyncBucket(
-        s3,
-        bundleDir,
-        stackContext.getDeploymentBucketName());
+    hardSyncBucket(s3, bundleDir, stackContext.getDeploymentBucketName());
 
     if (!cf.stackExists(stackContext.getStackName())) {
-      createStack(cf, stackContext, stackParameters, applicationStackName);
+      try {
+        createStack(cf, stackContext, stackParameters, applicationStackName);
+      } catch (Exception e) {
+        LOGGER.error("Failed to create stack: {}", stackContext.getStackName());
+        new DeleteStack(cf, s3).run(baseDir, true);
+        throw new IllegalStateException("Stack creation failed: " + e);
+      }
     } else {
-      throw new UnsupportedOperationException("Stack already exists: " + stackContext.getStackName());
+      updateStack(cf, stackContext, stackParameters, applicationStackFileName);
     }
 
   }
@@ -110,9 +117,9 @@ public final class OperationUtils {
    * @param cf {@link CloudFormationOperations} for interaction between cloud formation templates and stacks
    * @param stackContext the uniquely identifying {@link StackContext} for the stacks
    * @param parameters List of {@link ParameterKeyValue} for application stack template
-   * @param applicationStackName the application stack template file name
+   * @param applicationStackFileName the application stack template file name
    */
-  public static void createStack(CloudFormationOperations cf, StackContext stackContext, List<ParameterKeyValue> parameters, String applicationStackName) {
+  public static void createStack(CloudFormationOperations cf, StackContext stackContext, List<ParameterKeyValue> parameters, String applicationStackFileName) {
 
     String stackName = stackContext.getStackName();
 
@@ -120,10 +127,24 @@ public final class OperationUtils {
 
     cf.createStackWithUrlAndWait(
         stackName,
-        String.format("https://s3.amazonaws.com/%s/stack/%s", stackContext.getDeploymentBucketName(), applicationStackName),
+        String.format("https://s3.amazonaws.com/%s/stack/%s", stackContext.getDeploymentBucketName(), applicationStackFileName),
         parameters);
 
     LOGGER.info("Done Creating Stack: {}", stackName);
+  }
+
+  public static void updateStack(CloudFormationOperations cf, StackContext stackContext, List<ParameterKeyValue> parameters, String applicationStackFileName) {
+    String stackName = stackContext.getStackName();
+
+    LOGGER.info("Updating Stack: {}", stackName);
+
+    cf.updateStackWithUrlAndWait(
+        stackName,
+        String.format("https://s3.amazonaws.com/%s/stack/%s", stackContext.getDeploymentBucketName(), applicationStackFileName),
+        parameters
+    );
+
+    LOGGER.info("Done Updating Stack: {}", stackName);
   }
 
   /**
@@ -144,7 +165,7 @@ public final class OperationUtils {
 
     s3.uploadDirectoryToBucket(bundleDir, bucketName);
 
-    LOGGER.info("Done Syncing {} to S3 Bucket {}", bundleDir.toString(), bucketName);
+    LOGGER.info("Done Syncing {} to S3 Bucket {}", bundleDir, bucketName);
   }
 
   /**
@@ -199,7 +220,43 @@ public final class OperationUtils {
       throw new RuntimeException("Unable to extract zip file", e);
     }
 
-    LOGGER.info("Done Unzipping CloudFormation Bundle: {}", bundle.toString());
+    LOGGER.info("Done Unzipping CloudFormation Bundle: {}", bundle);
+  }
+
+  /**
+   * Writes a properties file from application stack outputs
+   * @param cf {@link CloudFormationOperations} for interaction between cloud formation templates and stacks
+   * @param target the maven target directory path
+   * @param stackContext the uniquely identifying {@link StackContext} for the stacks
+   */
+  public static void writeOutputsToFile(CloudFormationOperations cf, Path target, String applicationStackName, StackContext stackContext) {
+
+    LOGGER.info("Writing Stack Outputs: {}", applicationStackName);
+
+    try {
+
+      Path file = target.resolve("test-stack.properties");
+      Files.deleteIfExists(file);
+
+      DescribeStacksRequest request = new DescribeStacksRequest().withStackName(stackContext.getStackName());
+
+      List<Output> outputs = cf.getStackOutputs(request);
+
+      if (outputs.size() > 0) {
+        for (Output output: outputs) {
+          String property = String.format("%s=%s", output.getOutputKey(), output.getOutputValue()) + "\n";
+          FileUtils.writeStringToFile(file.toFile(), property, StandardCharsets.UTF_8);
+        }
+        LOGGER.info("Done Writing Stack Outputs: {}", file);
+      } else {
+        LOGGER.info("Stack Has No Outputs, File Not Written: {}", applicationStackName);
+      }
+
+    } catch (IOException e) {
+      throw new RuntimeException("Unable to write stack outputs", e);
+    }
+
+
   }
 
   private OperationUtils() {

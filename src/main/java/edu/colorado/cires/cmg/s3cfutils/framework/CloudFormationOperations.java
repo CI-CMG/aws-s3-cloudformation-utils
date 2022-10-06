@@ -32,6 +32,14 @@ public interface CloudFormationOperations {
     void createStackWithUrlAndWait(String stackName, String templateUrl, List<ParameterKeyValue> parameters);
 
     /**
+     * Updates a stack with S3 bucket url and waits for completion
+     * @param stackName the name of the stack
+     * @param templateUrl S3 url to the updated template
+     * @param parameters a list of {@link ParameterKeyValue} for the updated template
+     */
+    void updateStackWithUrlAndWait(String stackName, String templateUrl, List<ParameterKeyValue> parameters);
+
+    /**
      * Returns true if a stack with a given name exists
      * @param stackName the name of the stack
      * @return true if the stack exists

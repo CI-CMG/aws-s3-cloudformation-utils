@@ -35,16 +35,29 @@ public class StackOperations {
         String cfBaseDir = args[2].trim();
         String baseDir = args[3].trim();
         String cfPrefix = args[4].trim();
-        String deploymentParamsName = args[5].trim();
-        String stackParamsName = args[6].trim();
-        String applicationStackName = args[7].trim();
+        String deploymentParamsPath = args[5].trim();
+        String stackParamsPath = args[6].trim();
+        String applicationStackFileName = args[7].trim();
         boolean writeStackOutputs = Boolean.parseBoolean(args[8]);
         new CreateStack(cf, s3, objectMapper).run(version, cfBaseDir, baseDir,
-                cfPrefix, deploymentParamsName, stackParamsName, applicationStackName, writeStackOutputs);
+                cfPrefix, deploymentParamsPath, stackParamsPath, applicationStackFileName, writeStackOutputs);
       }
       break;
       case "delete-stack":
-        new DeleteStack(cf, s3).run(args[1].trim());
+        new DeleteStack(cf, s3).run(args[1].trim(), false);
+        break;
+      case "update-stack":
+        String version = args[1].trim();
+        String applicationStackName = args[2].trim();
+        String applicationStackFileName = args[3].trim();
+        String deploymentStackName = args[4].trim();
+        String cfBaseDir = args[5].trim();
+        String cfPrefix = args[6].trim();
+        String baseDir = args[7].trim();
+        String deploymentParamsPath = args[8].trim();
+        String stackParamsPath = args[9].trim();
+        boolean writeStackOutputs = Boolean.parseBoolean(args[10]);
+        new UpdateStack(cf, s3, objectMapper).run(version, applicationStackName, applicationStackFileName, deploymentStackName, cfBaseDir, cfPrefix, baseDir, deploymentParamsPath, stackParamsPath, writeStackOutputs);
         break;
       default:
         throw new RuntimeException("Invalid command '" + args[0] + "'");

@@ -5,7 +5,6 @@ package edu.colorado.cires.cmg.s3cfutils.framework;
 // (powered by FernFlower decompiler)
 //
 
-import com.amazonaws.services.cloudformation.AbstractAmazonCloudFormation;
 import com.amazonaws.services.cloudformation.AmazonCloudFormation;
 import com.amazonaws.services.cloudformation.model.Capability;
 import com.amazonaws.services.cloudformation.model.CreateStackRequest;
@@ -38,7 +37,7 @@ public class CloudFormationOperationsImpl implements CloudFormationOperations {
      */
     public void deleteStackAndWait(String stackName) {
         this.cf.deleteStack((new DeleteStackRequest()).withStackName(stackName));
-        this.cf.waiters().stackCreateComplete().run(new WaiterParameters((new DescribeStacksRequest()).withStackName(stackName)));
+        this.cf.waiters().stackDeleteComplete().run(new WaiterParameters((new DescribeStacksRequest()).withStackName(stackName)));
     }
 
     /**
@@ -61,6 +60,31 @@ public class CloudFormationOperationsImpl implements CloudFormationOperations {
     public void createStackWithUrlAndWait(String stackName, String templateUrl, List<ParameterKeyValue> parameters) {
         this.cf.createStack((new CreateStackRequest()).withStackName(stackName).withTemplateURL(templateUrl).withCapabilities(new Capability[]{Capability.CAPABILITY_IAM, Capability.CAPABILITY_AUTO_EXPAND}).withParameters((Collection)parameters.stream().map(ParameterKeyValue::toParameter).collect(Collectors.toList())));
         this.cf.waiters().stackCreateComplete().run(new WaiterParameters((new DescribeStacksRequest()).withStackName(stackName)));
+    }
+
+    /**
+     * Updates a stack with S3 bucket url and waits for completion
+     * @param stackName the name of the stack
+     * @param templateUrl S3 url to the updated template
+     * @param parameters a list of {@link ParameterKeyValue} for the updated template
+     */
+    public void updateStackWithUrlAndWait(String stackName, String templateUrl, List<ParameterKeyValue> parameters) {
+        cf.updateStack(new UpdateStackRequest()
+            .withStackName(stackName)
+            .withTemplateURL(templateUrl)
+            .withCapabilities(Capability.CAPABILITY_IAM, Capability.CAPABILITY_AUTO_EXPAND)
+            .withParameters(
+                parameters.stream()
+                    .map(ParameterKeyValue::toParameter)
+                    .collect(Collectors.toList())
+            )
+        );
+        try {
+            Thread.sleep(10000);
+        } catch (InterruptedException ignore) {
+
+        }
+        cf.waiters().stackUpdateComplete().run(new WaiterParameters<>(new DescribeStacksRequest().withStackName(stackName)));
     }
 
     /**

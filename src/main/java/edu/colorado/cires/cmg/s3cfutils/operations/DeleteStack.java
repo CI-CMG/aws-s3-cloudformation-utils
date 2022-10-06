@@ -41,13 +41,15 @@ public class DeleteStack {
    * Empties deployment bucket, deletes deployment stack and deletes application stack
    * @param baseDir the project base directory
    */
-  public void run(String baseDir) {
+  public void run(String baseDir, boolean deploymentOnly) {
     Path targetDir = Paths.get(baseDir).resolve("target");
     String id = ITUtils.readId(targetDir);
     LOGGER.info("Deleting AWS Test Resources: {}", id);
     StackContext stackContext = StackContext.Builder.configureTest(id).build();
     emptyBucket(stackContext.getDeploymentBucketName());
-    deleteStack(stackContext.getStackName());
+    if (!deploymentOnly) {
+      deleteStack(stackContext.getStackName());
+    }
     deleteStack(stackContext.getDeploymentStackName());
 
     LOGGER.info("Done Deleting AWS Test Resources: {}", id);
