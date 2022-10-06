@@ -52,8 +52,6 @@ public class UpdateStack {
     String deploymentStackPrefix = getParamValue(deploymentParameters, ParameterConsts.StackPrefix.name());
     String applicationStackPrefix = getParamValue(stackParameters, ParameterConsts.StackPrefix.name());
 
-    LOGGER.info("Deployment: {}", deploymentStackPrefix);
-    LOGGER.info("Application: {}", applicationStackPrefix);
     if (!deploymentStackPrefix.equals(applicationStackPrefix)) {
       throw new IllegalStateException(String.format("%s must be the same in deployment and stack parameters", ParameterConsts.StackPrefix.name()));
     }
@@ -78,9 +76,7 @@ public class UpdateStack {
         deploymentParameters,
         stackParameters,
         cfPrefix,
-        applicationStackName,
-        applicationStackFileName,
-        baseDir
+        applicationStackFileName
     );
 
     LOGGER.info("Done Updating AWS Resources: {}", applicationStackName);

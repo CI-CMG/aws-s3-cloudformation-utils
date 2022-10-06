@@ -8,6 +8,7 @@ import edu.colorado.cires.cmg.s3cfutils.framework.CloudFormationOperationsImpl;
 import edu.colorado.cires.cmg.s3cfutils.framework.ObjectMapperCreator;
 import edu.colorado.cires.cmg.s3cfutils.framework.S3Operations;
 import edu.colorado.cires.cmg.s3cfutils.framework.S3OperationsImpl;
+import edu.colorado.cires.cmg.s3cfutils.framework.StackContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,13 +45,24 @@ public class StackOperations {
       }
       break;
       case "delete-stack":
+        String applicationStackName = args[1].trim();
+        String deploymentStackName = args[2].trim();
+        String deploymentBucketName = args[3].trim();
+        StackContext stackContext = StackContext.Builder.configure()
+            .withStackName(applicationStackName)
+            .withDeploymentStackName(deploymentStackName)
+            .withDeploymentBucketName(deploymentBucketName)
+            .build();
+        new DeleteStack(cf, s3).run(stackContext, false);
+        break;
+      case "delete-stored-stack":
         new DeleteStack(cf, s3).run(args[1].trim(), false);
         break;
       case "update-stack":
         String version = args[1].trim();
-        String applicationStackName = args[2].trim();
+        applicationStackName = args[2].trim();
         String applicationStackFileName = args[3].trim();
-        String deploymentStackName = args[4].trim();
+        deploymentStackName = args[4].trim();
         String cfBaseDir = args[5].trim();
         String cfPrefix = args[6].trim();
         String baseDir = args[7].trim();

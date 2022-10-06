@@ -55,6 +55,18 @@ public class DeleteStack {
     LOGGER.info("Done Deleting AWS Test Resources: {}", id);
   }
 
+  public void run(StackContext stackContext, boolean deploymentOnly) {
+    String stackName = stackContext.getStackName();
+    LOGGER.info("Deleting AWS Test Resources: {}", stackName);
+    emptyBucket(stackContext.getDeploymentBucketName());
+    if (!deploymentOnly) {
+      deleteStack(stackName);
+    }
+    deleteStack(stackContext.getDeploymentStackName());
+
+    LOGGER.info("Done Deleting AWS Test Resources: {}", stackName);
+  }
+
   /**
    * Deletes a stack and waits for completion
    * @param stackName the stack name

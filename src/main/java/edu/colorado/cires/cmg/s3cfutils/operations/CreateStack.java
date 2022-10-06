@@ -77,9 +77,7 @@ public class CreateStack {
         deploymentParameters,
         stackParameters,
         cfPrefix,
-        applicationStackFileName,
-        applicationStackFileName,
-        baseDir
+        applicationStackFileName
     );
 
     LOGGER.info("Done Creating AWS Test Resources: {}", id);

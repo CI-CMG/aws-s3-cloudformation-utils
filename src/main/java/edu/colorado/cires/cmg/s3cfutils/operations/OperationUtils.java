@@ -41,7 +41,7 @@ public final class OperationUtils {
    * @param deploymentParameters List of {@link ParameterKeyValue} for deployment stack template
    * @param stackParameters List of {@link ParameterKeyValue} for application stack template
    * @param cfPrefix the name of the module CloudFormation templates are located in
-   * @param applicationStackName the application stack template file name
+   * @param applicationStackFileName the application stack template file name
    */
   public static void createOrUpdateStack(
       CloudFormationOperations cf,
@@ -52,9 +52,7 @@ public final class OperationUtils {
       List<ParameterKeyValue> deploymentParameters,
       List<ParameterKeyValue> stackParameters,
       String cfPrefix,
-      String applicationStackName,
-      String applicationStackFileName,
-      String baseDir
+      String applicationStackFileName
       ) {
 
     Path cfTargetDir = Paths.get(cfBaseDir).resolve("target");
@@ -74,10 +72,10 @@ public final class OperationUtils {
 
     if (!cf.stackExists(stackContext.getStackName())) {
       try {
-        createStack(cf, stackContext, stackParameters, applicationStackName);
+        createStack(cf, stackContext, stackParameters, applicationStackFileName);
       } catch (Exception e) {
         LOGGER.error("Failed to create stack: {}", stackContext.getStackName());
-        new DeleteStack(cf, s3).run(baseDir, true);
+        new DeleteStack(cf, s3).run(stackContext, true);
         throw new IllegalStateException("Stack creation failed: " + e);
       }
     } else {
